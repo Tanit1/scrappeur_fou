@@ -4,22 +4,39 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 
-PAGE_URL = 'https://coinmarketcap.com/all/views/all/'
-
-# Opens HTML page
-page = Nokogiri::HTML(URI.open(PAGE_URL))
-
-devise_array = []
-price_array  = []
-
-# Select classes to be scrapped
-page.css('.cmc-table__cell--sort-by__name a').each do |link|
-  devise_array << link.text # Crypto name
+def open_page(page_url)
+  # Open HTML page
+  Nokogiri::HTML(URI.open(page_url))
 end
 
-page.css('.cmc-table__cell--sort-by__price a').each do |link|
-  price_array << link.text # Crypto price
+def select_target_css(page, css_class)
+  result_array = []
+
+  # Select classes to be scrapped
+  page.css(css_class).each do |link|
+    result_array << link.text # Crypto device
+  end
+
+  result_array
 end
 
-# Zip 2 tables in a Hash
-print Hash[devise_array.zip(price_array)]
+def crypto_scrapper
+  scrapping_array = []
+
+  page = open_page('https://coinmarketcap.com/all/views/all/')
+
+  device_array = select_target_css(page, '.cmc-table__cell--sort-by__name a')
+  price_array = select_target_css(page, '.cmc-table__cell--sort-by__price a')
+
+  # Browse the Hash to store each crypto in Hash and
+  # then insert it into scrapping_array
+  Hash[device_array.zip(price_array)].each do |device, price|
+    price = price.delete('$').to_f
+
+    scrapping_array << { device => price }
+  end
+
+  scrapping_array
+end
+
+puts crypto_scrapper
